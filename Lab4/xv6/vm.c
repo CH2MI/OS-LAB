@@ -232,7 +232,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
   char *mem;
   uint a;
 
-  if(newsz >= KERNBASE)
+  if(newsz > KERNBASE)
     return 0;
   if(newsz < oldsz)
     return oldsz;
@@ -332,9 +332,15 @@ copyuvm(pde_t *pgdir, uint sz)
     return 0;
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
-      panic("copyuvm: pte should exist");
+    {
+      //panic("copyuvm: pte should exist");
+      continue;
+    }
     if(!(*pte & PTE_P))
-      panic("copyuvm: page not present");
+    {
+      //panic("copyuvm: page not present");
+      continue;
+    }
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
