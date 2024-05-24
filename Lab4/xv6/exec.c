@@ -69,13 +69,14 @@ exec(char *path, char **argv)
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
   sp = sz;
   */
-
+ 
   // Allocate Stack at the top address
-  sz = PGROUNDDOWN(KERNBASE - 1);
-  cprintf("now sz : %p\n", sz);
+  uint tmp = PGROUNDUP(sz);
+  sz = KERNBASE - PGSIZE;
   if ((sz = allocuvm(pgdir, sz, sz + PGSIZE)) == 0)
-    goto bad;
-  sp = sz;
+    goto bad; 
+  sp = KERNBASE;
+
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
@@ -105,11 +106,13 @@ exec(char *path, char **argv)
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
-  curproc->sz = sz;
+  curproc->sz = tmp;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+  curproc->stackcnt = 1;
   switchuvm(curproc);
   freevm(oldpgdir);
+
   return 0;
 
  bad:

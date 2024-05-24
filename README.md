@@ -23,8 +23,9 @@ goals:
 goals:
 1. **Add a system call int printpt(int pid) that outputs the process’s page table**
    + Only prints the last level page table entries that are valid.
-2. Rearrange stack
+2. **Rearrange stack**
    + Allocate stack at the top address (below KERNBASE).
-3. Demand paging for stack growth
-4. Test with recurse.c
+3. **Demand paging for stack growth**
    + Should be able to run recurse 1040 without error.
+
+   
