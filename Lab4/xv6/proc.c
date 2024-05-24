@@ -544,41 +544,26 @@ printpt(int pid)
 {
   pde_t* pgdir = myproc()->pgdir;
   
-  cprintf("%d\n", myproc()->pid);
   cprintf("START PAGE TABLE (pid %d)\n", pid);
   
-  //int cnt = 0;
-  
   // 유저영역의 페이지 디렉토리를 조사한다.
-  for (uint i = 0; i < PDX(KERNBASE); i++) {
+  for (uint i = 0; i < NPDENTRIES / 2; i++) {
 
     // 활성화 된 페이지 디렉토리이면
     if (pgdir[i] & PTE_P) {
       
-      //cprintf("%p %x\n", &pgdir[i], pgdir[i]);
-
       // 해당 주소의 페이지 테이블을 가져온다.
       pte_t* pgtab = (pte_t*)P2V(PTE_ADDR(pgdir[i]));
       
-      //cprintf("%p %x %p\n", pgdir, pgdir[i], pgtab);
-
       // 페이지 테이블의 개수 1024개를 모두 조사한다.
       for (uint j = 0; j < NPTENTRIES; j++) {
         
         if (pgtab[j] & PTE_P) {
-          
-
-          cprintf("%p %x Data : \n", &pgtab[j], pgtab[j]);
-          cprintf("%d %s %s %s\n", j, "P", (pgtab[j] & PTE_U) ? "U\0" : "K\0", (pgtab[j] & PTE_W) ? "W\0" : "-\0");
-
-
+          cprintf("%x %s %s %s %x\n", j, "P", (pgtab[j] & PTE_U) ? "U" : "K", (pgtab[j] & PTE_W) ? "W" : "-", PTX(pgtab[j]));
         }
       }
     }
   }
-  
-  
-
   cprintf("END PAGE TABLE\n");
   return 0;
 }

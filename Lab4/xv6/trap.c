@@ -82,6 +82,17 @@ trap(struct trapframe *tf)
     lapiceoi();
     break;
 
+  case T_PGFLT:
+    uint sz = KERNBASE - PGSIZE * (myproc()->stackcnt + 1);
+    
+    // fail stack allocation
+    if ((sz = allocuvm(myproc()->pgdir, sz, sz + PGSIZE)) == 0) 
+      cprintf("faild stack allocation\n");
+    else { 
+      myproc()->stackcnt++;
+      break;
+    }
+    
   //PAGEBREAK: 13
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){
