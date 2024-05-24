@@ -11917,7 +11917,7 @@ trap(struct trapframe *tf)
 80106139:	89 45 e4             	mov    %eax,-0x1c(%ebp)
 8010613c:	83 7d e4 00          	cmpl   $0x0,-0x1c(%ebp)
 80106140:	75 3b                	jne    8010617d <trap+0x19f>
-      cprintf("faild stack allocation");
+      cprintf("faild stack allocation\n");
 80106142:	83 ec 0c             	sub    $0xc,%esp
 80106145:	68 c8 a5 10 80       	push   $0x8010a5c8
 8010614a:	e8 a5 a2 ff ff       	call   801003f4 <cprintf>
@@ -11926,7 +11926,7 @@ trap(struct trapframe *tf)
       myproc()->stackcnt++;
       break;
     }
-    cprintf("stack count : %d 0x%x 0x%x\n", myproc()->stackcnt, myproc()->tf->esp, tf->esp);
+    
 80106152:	8b 45 08             	mov    0x8(%ebp),%eax
 80106155:	8b 70 44             	mov    0x44(%eax),%esi
 80106158:	e8 ce d8 ff ff       	call   80103a2b <myproc>
@@ -11948,10 +11948,10 @@ trap(struct trapframe *tf)
 80106188:	89 50 7c             	mov    %edx,0x7c(%eax)
       break;
 8010618b:	e9 b5 00 00 00       	jmp    80106245 <trap+0x267>
-    
   //PAGEBREAK: 13
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){
+      // In kernel, it must be our mistake.
 80106190:	e8 96 d8 ff ff       	call   80103a2b <myproc>
 80106195:	85 c0                	test   %eax,%eax
 80106197:	74 11                	je     801061aa <trap+0x1cc>
@@ -11961,8 +11961,8 @@ trap(struct trapframe *tf)
 801061a3:	83 e0 03             	and    $0x3,%eax
 801061a6:	85 c0                	test   %eax,%eax
 801061a8:	75 39                	jne    801061e3 <trap+0x205>
-      // In kernel, it must be our mistake.
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
+              tf->trapno, cpuid(), tf->eip, rcr2());
 801061aa:	e8 90 fc ff ff       	call   80105e3f <rcr2>
 801061af:	89 c3                	mov    %eax,%ebx
 801061b1:	8b 45 08             	mov    0x8(%ebp),%eax
@@ -11978,14 +11978,14 @@ trap(struct trapframe *tf)
 801061c9:	68 fc a5 10 80       	push   $0x8010a5fc
 801061ce:	e8 21 a2 ff ff       	call   801003f4 <cprintf>
 801061d3:	83 c4 20             	add    $0x20,%esp
-              tf->trapno, cpuid(), tf->eip, rcr2());
       panic("trap");
+    }
 801061d6:	83 ec 0c             	sub    $0xc,%esp
 801061d9:	68 2e a6 10 80       	push   $0x8010a62e
 801061de:	e8 c6 a3 ff ff       	call   801005a9 <panic>
-    }
     // In user space, assume process misbehaved.
     cprintf("pid %d %s: trap %d err %d on cpu %d "
+            "eip 0x%x addr 0x%x--kill proc\n",
 801061e3:	e8 57 fc ff ff       	call   80105e3f <rcr2>
 801061e8:	89 c6                	mov    %eax,%esi
 801061ea:	8b 45 08             	mov    0x8(%ebp),%eax
@@ -11998,13 +11998,13 @@ trap(struct trapframe *tf)
 80106200:	89 4d d0             	mov    %ecx,-0x30(%ebp)
 80106203:	8b 45 08             	mov    0x8(%ebp),%eax
 80106206:	8b 78 30             	mov    0x30(%eax),%edi
-            "eip 0x%x addr 0x%x--kill proc\n",
             myproc()->pid, myproc()->name, tf->trapno,
+            tf->err, cpuid(), tf->eip, rcr2());
 80106209:	e8 1d d8 ff ff       	call   80103a2b <myproc>
 8010620e:	8d 50 6c             	lea    0x6c(%eax),%edx
 80106211:	89 55 cc             	mov    %edx,-0x34(%ebp)
 80106214:	e8 12 d8 ff ff       	call   80103a2b <myproc>
-    cprintf("pid %d %s: trap %d err %d on cpu %d "
+            "eip 0x%x addr 0x%x--kill proc\n",
 80106219:	8b 40 10             	mov    0x10(%eax),%eax
 8010621c:	56                   	push   %esi
 8010621d:	ff 75 d4             	push   -0x2c(%ebp)
@@ -12016,19 +12016,19 @@ trap(struct trapframe *tf)
 80106229:	68 34 a6 10 80       	push   $0x8010a634
 8010622e:	e8 c1 a1 ff ff       	call   801003f4 <cprintf>
 80106233:	83 c4 20             	add    $0x20,%esp
-            tf->err, cpuid(), tf->eip, rcr2());
     myproc()->killed = 1;
+  }
 80106236:	e8 f0 d7 ff ff       	call   80103a2b <myproc>
 8010623b:	c7 40 24 01 00 00 00 	movl   $0x1,0x24(%eax)
 80106242:	eb 01                	jmp    80106245 <trap+0x267>
     break;
 80106244:	90                   	nop
-  }
 
   // Force process exit if it has been killed and is in user space.
   // (If it is still executing in the kernel, let it keep running
   // until it gets to the regular system call return.)
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
+    exit();
 80106245:	e8 e1 d7 ff ff       	call   80103a2b <myproc>
 8010624a:	85 c0                	test   %eax,%eax
 8010624c:	74 23                	je     80106271 <trap+0x293>
@@ -12042,12 +12042,12 @@ trap(struct trapframe *tf)
 80106264:	83 e0 03             	and    $0x3,%eax
 80106267:	83 f8 03             	cmp    $0x3,%eax
 8010626a:	75 05                	jne    80106271 <trap+0x293>
-    exit();
-8010626c:	e8 32 dc ff ff       	call   80103ea3 <exit>
 
+8010626c:	e8 32 dc ff ff       	call   80103ea3 <exit>
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
   if(myproc() && myproc()->state == RUNNING &&
+     tf->trapno == T_IRQ0+IRQ_TIMER)
 80106271:	e8 b5 d7 ff ff       	call   80103a2b <myproc>
 80106276:	85 c0                	test   %eax,%eax
 80106278:	74 1d                	je     80106297 <trap+0x2b9>
@@ -12055,17 +12055,17 @@ trap(struct trapframe *tf)
 8010627f:	8b 40 0c             	mov    0xc(%eax),%eax
 80106282:	83 f8 04             	cmp    $0x4,%eax
 80106285:	75 10                	jne    80106297 <trap+0x2b9>
-     tf->trapno == T_IRQ0+IRQ_TIMER)
+    yield();
 80106287:	8b 45 08             	mov    0x8(%ebp),%eax
 8010628a:	8b 40 30             	mov    0x30(%eax),%eax
-  if(myproc() && myproc()->state == RUNNING &&
+     tf->trapno == T_IRQ0+IRQ_TIMER)
 8010628d:	83 f8 20             	cmp    $0x20,%eax
 80106290:	75 05                	jne    80106297 <trap+0x2b9>
-    yield();
-80106292:	e8 bd df ff ff       	call   80104254 <yield>
 
+80106292:	e8 bd df ff ff       	call   80104254 <yield>
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
+    exit();
 80106297:	e8 8f d7 ff ff       	call   80103a2b <myproc>
 8010629c:	85 c0                	test   %eax,%eax
 8010629e:	74 26                	je     801062c6 <trap+0x2e8>
@@ -12079,12 +12079,11 @@ trap(struct trapframe *tf)
 801062b6:	83 e0 03             	and    $0x3,%eax
 801062b9:	83 f8 03             	cmp    $0x3,%eax
 801062bc:	75 08                	jne    801062c6 <trap+0x2e8>
-    exit();
+}
 801062be:	e8 e0 db ff ff       	call   80103ea3 <exit>
 801062c3:	eb 01                	jmp    801062c6 <trap+0x2e8>
     return;
 801062c5:	90                   	nop
-}
 801062c6:	8d 65 f4             	lea    -0xc(%ebp),%esp
 801062c9:	5b                   	pop    %ebx
 801062ca:	5e                   	pop    %esi
