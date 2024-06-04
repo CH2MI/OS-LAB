@@ -83,13 +83,11 @@ trap(struct trapframe *tf)
     break;
 
   case T_PGFLT:
-    uint sz = KERNBASE - PGSIZE * (myproc()->stackcnt + 1);
-    
-    // fail stack allocation
+    uint sz = PGROUNDDOWN(rcr2());
+
     if ((sz = allocuvm(myproc()->pgdir, sz, sz + PGSIZE)) == 0) 
       cprintf("faild stack allocation\n");
     else { 
-      myproc()->stackcnt++;
       break;
     }
     

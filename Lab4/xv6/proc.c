@@ -414,7 +414,7 @@ forkret(void)
     iinit(ROOTDEV);
     initlog(ROOTDEV);
   }
-
+  
   // Return to "caller", actually trapret (see allocproc).
 }
 
@@ -559,7 +559,7 @@ printpt(int pid)
       for (uint j = 0; j < NPTENTRIES; j++) {
         
         if (pgtab[j] & PTE_P) {
-          cprintf("%x %s %s %s %x\n", j, "P", (pgtab[j] & PTE_U) ? "U" : "K", (pgtab[j] & PTE_W) ? "W" : "-", PTX(pgtab[j]));
+          cprintf("%x %s %s %s %x\n", NPDENTRIES * i + j, "P", (pgtab[j] & PTE_U) ? "U" : "K", (pgtab[j] & PTE_W) ? "W" : "-", pgtab[j] >> PGSHIFT);
         }
       }
     }

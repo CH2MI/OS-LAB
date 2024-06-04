@@ -90,11 +90,11 @@ sys_uptime(void)
   return xticks;
 }
 
-int sys_printpt(int pid)
-{
-  int n;
-  if (argint(0, &n) < 0)
-    return -1;
-  printpt(n);
-  return 0;
-}
+  int sys_printpt(int pid)
+  {
+    int n;
+    if (argint(0, &n) < 0)
+      return -1;
+    printpt(n);
+    return 0;
+  }
